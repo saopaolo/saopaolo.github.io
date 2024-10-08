@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Trend Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+        .logo {
+            width: 78px;
+            height: 76px;
+        }
+        nav ul {
+            display: flex;
+            list-style-type: none;
+            padding: 0;
+        }
+        nav ul li {
+            margin-left: 20px;
+        }
+        nav ul li a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        nav ul li a:hover {
+            color: #4a90e2;
+        }
+        .page {
+            margin-top: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .widget {
+            background-color: #2c2c2c;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .widget h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .widget-container {
+            width: 100%;
+            height: 300px;
+        }
+        #keywordInput {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px 0 0 5px;
+        }
+        #analyzeButton {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: #fff;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+        #analyzeButton:hover {
+            background-color: #3a7bc8;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading-text {
+            font-size: 24px;
+            color: #fff;
+        }
+        .related-hashtag {
+            color: #4a90e2;
+            text-decoration: none;
+        }
+        .related-hashtag:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://static.wixstatic.com/media/9ad982_c5c91a4c5188461cbe35b863d663c4b9~mv2.png/v1/fill/w_78,h_76,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/New%20Logo.png" alt="Logo" class="logo">
+            <nav>
+                <ul>
+                    <li><a href="#" onclick="showPage('dashboard')">Dashboard</a></li>
+                    <li><a href="#" onclick="showPage('insights')">Insights</a></li>
+                    <li><a href="#" onclick="showPage('settings')">Settings</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div id="dashboard" class="page">
+            <input type="text" id="keywordInput" placeholder="Enter a keyword">
+            <button id="analyzeButton" onclick="analyzeTrends()">Analyze Trends</button>
+            <div class="grid">
+                <div class="widget">
+                    <h2>Related Searches</h2>
+                    <div id="communityGraph" class="widget-container"></div>
+                </div>
+                <div class="widget">
+                    <h2>Top Related Keywords</h2>
+                    <div id="topKeywords" class="widget-container"></div>
+                </div>
+                <div class="widget">
+                    <h2>Hashtag Popularity</h2>
+                    <div id="hashtagPopularity" class="widget-container"></div>
+                </div>
+                <div class="widget">
+                    <h2>Video Count Analysis</h2>
+                    <div id="videoCountAnalysis" class="widget-container"></div>
+                </div>
+                <div class="widget">
+                    <h2>Related Hashtags</h2>
+                    <div id="relatedHashtags" class="widget-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="insights" class="page" style="display: none;">
+            <!-- Insights content -->
+        </div>
+
+        <div id="settings" class="page" style="display: none;">
+            <!-- Settings content -->
+        </div>
+    </div>
+
+    <div class="loading" style="display: none;">
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        async function fetchTikTokData(keyword) {
+            // Simulate an API call
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const relatedSearches = [
+                        keyword,
+                        keyword + " challenge",
+                        keyword + " dance",
+                        keyword + " tutorial",
+                        keyword + " funny",
+                        keyword + " trend"
+                    ];
+                    const hashtags = [
+                        "#" + keyword,
+                        "#" + keyword + "challenge",
+                        "#" + keyword + "dance",
+                        "#" + keyword + "viral",
+                        "#" + keyword + "trend"
+                    ];
+                    const videoCounts = hashtags.map(() => Math.floor(Math.random() * 1000000));
+                    resolve({
+                        relatedSearches,
+                        hashtags,
+                        videoCounts
+                    });
+                }, 1000); // Simulate network delay
+            });
+        }
+
+        async function analyzeTrends() {
+            const keyword = document.getElementById('keywordInput').value;
+            document.querySelector('.loading').style.display = 'flex';
+            const data = await fetchTikTokData(keyword);
+            updateVisualizations(data);
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function updateVisualizations(data) {
+            updateRelatedSearches(data.relatedSearches);
+            updateTopKeywords(data.relatedSearches);
+            updateHashtagPopularity(data.hashtags, data.videoCounts);
+            updateVideoCountAnalysis(data.hashtags, data.videoCounts);
+            updateRelatedHashtags(data.hashtags);
+        }
+
+        function updateRelatedSearches(relatedSearches) {
+            const graph = echarts.init(document.getElementById('communityGraph'));
+            const nodes = relatedSearches.map(search => ({ name: search }));
+            const links = relatedSearches.slice(1).map(search => ({
+                source: relatedSearches[0],
+                target: search
+            }));
+
+            const option = {
+                backgroundColor: '#2c2c2c',
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    data: nodes,
+                    links: links,
+                    roam: true,
+                    label: { show: true, color: '#ffffff' },
+                    force: { repulsion: 100 },
+                    lineStyle: { color: '#4a90e2' },
+                    itemStyle: { color: '#4a90e2' }
+                }]
+            };
+            graph.setOption(option);
+        }
+
+        function updateTopKeywords(relatedSearches) {
+            const topKeywordsElement = document.getElementById('topKeywords');
+            topKeywordsElement.innerHTML = relatedSearches.map(search => 
+                `<div style="margin-bottom: 10px; font-size: 16px;">${search}</div>`
+            ).join('');
+        }
+
+        function updateHashtagPopularity(hashtags, videoCounts) {
+            const chart = echarts.init(document.getElementById('hashtagPopularity'));
+            const option = {
+                backgroundColor: '#2c2c2c',
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: hashtags, axisLabel: { color: '#ffffff' } },
+                yAxis: { type: 'value', name: 'Video Count', axisLabel: { color: '#ffffff' } },
+                series: [{
+                    data: videoCounts,
+                    type: 'bar',
+                    itemStyle: { color: '#4a90e2' }
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        function updateVideoCountAnalysis(hashtags, videoCounts) {
+            const chart = echarts.init(document.getElementById('videoCountAnalysis'));
+            const option = {
+                backgroundColor: '#2c2c2c',
+                tooltip: { trigger: 'item' },
+                series: [{
+                    type: 'pie',
+                    radius: '50%',
+                    data: hashtags.map((hashtag, index) => ({
+                        value: videoCounts[index],
+                        name: hashtag
+                    })),
+                    label: { color: '#ffffff' },
+                    itemStyle: { 
+                        color: function(params) {
+                            const colors = ['#4a90e2', '#50C878', '#FFD700', '#9370DB', '#FF6347'];
+                            return colors[params.dataIndex % colors.length];
+                        }
+                    }
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        function updateRelatedHashtags(hashtags) {
+            const relatedHashtagsElement = document.getElementById('relatedHashtags');
+            relatedHashtagsElement.innerHTML = hashtags.map(hashtag => 
+                `<div style="margin-bottom: 10px;">
+                    <a href="https://www.tiktok.com/search?q=${encodeURIComponent(hashtag)}" target="_blank" class="related-hashtag">${hashtag}</a>
+                </div>`
+            ).join('');
+        }
+
+        // Initialize empty charts
+        updateVisualizations({
+            relatedSearches: ['example1', 'example2', 'example3'],
+            hashtags: ['#example1', '#example2', '#example3'],
+            videoCounts: [1000, 2000, 3000]
+        });
+    </script>
+</body>
+</html>
