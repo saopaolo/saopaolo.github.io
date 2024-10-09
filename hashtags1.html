@@ -140,14 +140,6 @@
                     <div id="topCountries"></div>
                 </div>
                 <div class="widget">
-                    <h2>Age Group Engagement</h2>
-                    <canvas id="ageGroupEngagement"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Country Performance by Age Group</h2>
-                    <canvas id="countryPerformanceByAgeGroup"></canvas>
-                </div>
-                <div class="widget">
                     <h2>Trends Over Time</h2>
                     <canvas id="trendsOverTime"></canvas>
                 </div>
@@ -247,7 +239,7 @@
                 const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
                 const viewsMatch = selectedViews.length === 0 || selectedViews.some(viewThreshold => {
                     const views = parseInt(row.views);
-                    return viewThreshold === 999999999 ? views < 1000000000 : views > viewThreshold;
+                    return viewThreshold === 999999999 ? views < 1000000000 : views >= viewThreshold;
                 });
                 const ageGroupMatch = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(row.age_group);
                 return countryMatch && viewsMatch && ageGroupMatch;
@@ -265,8 +257,6 @@
             updateRankChange();
             updateGlobalVsLocal();
             updateTopCountries();
-            updateAgeGroupEngagement();
-            updateCountryPerformanceByAgeGroup();
             updateTrendsOverTime();
             updateTopHashtagsOverTime();
             updateViewsPerPost();
@@ -367,7 +357,7 @@
             createOrUpdateChart('globalVsLocal', {
                 type: 'bar',
                 data: {
-                    labels:  data.slice(0, 5).map(row => row.hashtag_name),
+                    labels: data.slice(0, 5).map(row => row.hashtag_name),
                     datasets: [
                         {
                             label: 'Global Lifetime Views',
@@ -375,7 +365,6 @@
                             backgroundColor: 'rgba(255, 99, 132, 0.5)'
                         },
                         {
-                            
                             label: 'Current Views',
                             data: data.slice(0, 5).map(row => parseInt(row.views)),
                             backgroundColor: 'rgba(54, 162, 235, 0.5)'
@@ -385,6 +374,7 @@
                 options: {
                     responsive: true,
                     scales: {
+                        
                         y: {
                             beginAtZero: true
                         }
@@ -395,76 +385,9 @@
 
         function updateTopCountries() {
             const topCountries = data[0]?.top_country_list.split(',') || [];
-            const topCountriesHtml = topCountries.map(country => `<div>${country}</div>`).join('');
+            const topCountriesHtml = topCountries.map(country => 
+                `<div>${country}</div>`).join('');
             document.getElementById('topCountries').innerHTML = `<h3>Top Countries:</h3>${topCountriesHtml}`;
-        }
-
-        function updateAgeGroupEngagement() {
-            const ageGroups = ['18-24', '25-34', '35+'];
-            const engagementData = ageGroups.map(age => {
-                const row = data.find(r => r.age_group === age);
-                return row ? parseFloat(row.percentage) * 100 : 0;
-            });
-
-            createOrUpdateChart('ageGroupEngagement', {
-                type: 'bar',
-                data: {
-                    labels: ageGroups,
-                    datasets: [{
-                        label: 'Engagement',
-                        data: engagementData,
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Percentage'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateCountryPerformanceByAgeGroup() {
-            const countries = [...new Set(data.map(row => row.country_code))];
-            const ageGroups = ['18-24', '25-34', '35+'];
-            
-            createOrUpdateChart('countryPerformanceByAgeGroup', {
-                type: 'bar',
-                data: {
-                    labels: countries,
-                    datasets: ageGroups.map((age, index) => ({
-                        label: age,
-                        data: countries.map(country => {
-                            const row = data.find(r => r.country_code === country && r.age_group === age);
-                            return row ? parseFloat(row.percentage) * 100 : 0;
-                        }),
-                        backgroundColor: `rgba(${75 + index * 50}, 192, 192, 0.5)`
-                    }))
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            stacked: true,
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Percentage'
-                            }
-                        }
-                    }
-                }
-            });
         }
 
         function updateTrendsOverTime() {
@@ -738,8 +661,10 @@
         // Add event listeners for segmentation inputs
         document.querySelectorAll('input[name="country"], input[name="views"], input[name="age_group"]').forEach(input => {
             input.addEventListener('change', () => {
-                applySegmentation();
-                updateCharts();
+                if (originalData.length > 0) {
+                    applySegmentation();
+                    updateCharts();
+                }
             });
         });
     </script>
