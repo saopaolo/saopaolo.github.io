@@ -58,6 +58,20 @@
         #fileInput, #loadButton {
             margin-bottom: 20px;
         }
+        .segmentation-box {
+            background-color: #2a2a2a;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .segmentation-box summary {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .segmentation-box label {
+            display: block;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +89,36 @@
 
         <input type="file" id="fileInput" accept=".csv">
         <button id="loadButton">Load Visualizations</button>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Top Country List</summary>
+                <label><input type="checkbox" name="country" value="US"> US</label>
+                <label><input type="checkbox" name="country" value="PK"> PK</label>
+                <label><input type="checkbox" name="country" value="GB"> GB</label>
+                <label><input type="checkbox" name="country" value="ID"> ID</label>
+                <label><input type="checkbox" name="country" value="DE"> DE</label>
+            </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Views</summary>
+                <label><input type="checkbox" name="views" value="5000000000"> More than 5 billion</label>
+                <label><input type="checkbox" name="views" value="3000000000"> More than 3 billion</label>
+                <label><input type="checkbox" name="views" value="1000000000"> More than 1 billion</label>
+                <label><input type="checkbox" name="views" value="999999999"> Less than 1 billion</label>
+            </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Age Group</summary>
+                <label><input type="checkbox" name="age_group" value="18-24"> 18-24</label>
+                <label><input type="checkbox" name="age_group" value="25-34"> 25-34</label>
+                <label><input type="checkbox" name="age_group" value="35+"> 35+</label>
+            </details>
+        </div>
 
         <div id="dashboard" class="page">
             <div class="grid">
@@ -136,11 +180,6 @@
                     <div id="topPerformingHashtags"></div>
                 </div>
                 <div class="widget">
-                    <h2>Interactive Filters</h2>
-                    <div id="countryAgeFilters"></div>
-                    <div id="dateRangeSelector"></div>
-                </div>
-                <div class="widget">
                     <h2>Most Engaged Posts</h2>
                     <div id="mostEngagedPosts"></div>
                 </div>
@@ -170,6 +209,7 @@
 
     <script>
         let data = [];
+        let originalData = [];
         let charts = {};
 
         function showPage(pageId) {
@@ -182,18 +222,42 @@
             Papa.parse(file, {
                 header: true,
                 complete: function(results) {
-                    data = results.data;
+                    originalData = results.data;
+                    data = [...originalData];
+                    updateCharts();
                 }
             });
         });
 
         document.getElementById('loadButton').addEventListener('click', function() {
-            if (data.length > 0) {
+            if (originalData.length > 0) {
+                applySegmentation();
                 updateCharts();
             } else {
                 alert('Please select a CSV file first.');
             }
         });
+
+        function applySegmentation() {
+            const selectedCountries = Array.from(document.querySelectorAll('input[name="country"]:checked')).map(el => el.value);
+            const selectedViews = Array.from(document.querySelectorAll('input[name="views"]:checked')).map(el => parseInt(el.value));
+            const selectedAgeGroups = Array.from(document.querySelectorAll('input[name="age_group"]:checked')).map(el => el.value);
+
+            data = originalData.filter(row => {
+                const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
+                const viewsMatch = selectedViews.length === 0 || selectedViews.some(viewThreshold => {
+                    const views = parseInt(row.views);
+                    return viewThreshold === 999999999 ? views < 1000000000 : views > viewThreshold;
+                });
+                const ageGroupMatch = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(row.age_group);
+                return countryMatch && viewsMatch && ageGroupMatch;
+            });
+
+            if (data.length === 0) {
+                data = [...originalData];
+                alert('No data matches the selected filters. Showing all data.');
+            }
+        }
 
         function updateCharts() {
             updateHashtagPerformance();
@@ -211,7 +275,6 @@
             updateTopHashtagsComparison();
             updateRankChangeAlerts();
             updateTopPerformingHashtags();
-            updateInteractiveFilters();
             updateMostEngagedPosts();
             updateCategoryPerformance();
             updateHistoricalRankComparison();
@@ -221,12 +284,9 @@
         function createOrUpdateChart(chartId, config) {
             const ctx = document.getElementById(chartId).getContext('2d');
             if (charts[chartId]) {
-                charts[chartId].data = config.data;
-                charts[chartId].options = config.options;
-                charts[chartId].update();
-            } else {
-                charts[chartId] = new Chart(ctx, config);
+                charts[chartId].destroy();
             }
+            charts[chartId] = new Chart(ctx, config);
         }
 
         function updateHashtagPerformance() {
@@ -307,7 +367,7 @@
             createOrUpdateChart('globalVsLocal', {
                 type: 'bar',
                 data: {
-                    labels: data.slice(0, 5).map(row => row.hashtag_name),
+                    labels:  data.slice(0, 5).map(row => row.hashtag_name),
                     datasets: [
                         {
                             label: 'Global Lifetime Views',
@@ -315,6 +375,7 @@
                             backgroundColor: 'rgba(255, 99, 132, 0.5)'
                         },
                         {
+                            
                             label: 'Current Views',
                             data: data.slice(0, 5).map(row => parseInt(row.views)),
                             backgroundColor: 'rgba(54, 162, 235, 0.5)'
@@ -333,23 +394,25 @@
         }
 
         function updateTopCountries() {
-            const topCountries = data[0].top_country_list.split(',');
+            const topCountries = data[0]?.top_country_list.split(',') || [];
             const topCountriesHtml = topCountries.map(country => `<div>${country}</div>`).join('');
             document.getElementById('topCountries').innerHTML = `<h3>Top Countries:</h3>${topCountriesHtml}`;
         }
 
         function updateAgeGroupEngagement() {
+            const ageGroups = ['18-24', '25-34', '35+'];
+            const engagementData = ageGroups.map(age => {
+                const row = data.find(r => r.age_group === age);
+                return row ? parseFloat(row.percentage) * 100 : 0;
+            });
+
             createOrUpdateChart('ageGroupEngagement', {
                 type: 'bar',
                 data: {
-                    labels: ['18-24', '25-34', '35+'],
+                    labels: ageGroups,
                     datasets: [{
                         label: 'Engagement',
-                        data: [
-                            parseFloat(data[0].percentage) * 100,
-                            parseFloat(data[1].percentage) * 100,
-                            parseFloat(data[2].percentage) * 100
-                        ],
+                        data: engagementData,
                         backgroundColor: 'rgba(75, 192, 192, 0.5)'
                     }]
                 },
@@ -370,36 +433,20 @@
 
         function updateCountryPerformanceByAgeGroup() {
             const countries = [...new Set(data.map(row => row.country_code))];
+            const ageGroups = ['18-24', '25-34', '35+'];
+            
             createOrUpdateChart('countryPerformanceByAgeGroup', {
                 type: 'bar',
                 data: {
                     labels: countries,
-                    datasets: [
-                        {
-                            label: '18-24',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '18-24');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
-                        },
-                        {
-                            label: '25-34',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '25-34');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
-                        },
-                        {
-                            label: '35+',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '35+');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                        }
-                    ]
+                    datasets: ageGroups.map((age, index) => ({
+                        label: age,
+                        data: countries.map(country => {
+                            const row = data.find(r => r.country_code === country && r.age_group === age);
+                            return row ? parseFloat(row.percentage) * 100 : 0;
+                        }),
+                        backgroundColor: `rgba(${75 + index * 50}, 192, 192, 0.5)`
+                    }))
                 },
                 options: {
                     responsive: true,
@@ -412,7 +459,6 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                
                                 text: 'Percentage'
                             }
                         }
@@ -571,7 +617,7 @@
         function updateRankChangeAlerts() {
             const significantChanges = data
                 .filter(row => Math.abs(parseInt(row.rank_change)) > 5)
-                .slice(0, 20); // Limit to 20 items
+                .slice(0, 20);
             const alertsHtml = significantChanges.map(hashtag => `
                 <p>🚨 ${hashtag.hashtag_name} has changed its rank by ${hashtag.rank_change} positions.</p>
             `).join('');
@@ -582,36 +628,11 @@
             const topPerformers = data
                 .filter(row => parseInt(row.views) > 1000000)
                 .sort((a, b) => parseInt(b.views) - parseInt(a.views))
-                .slice(0, 20); // Limit to 20 items
+                .slice(0, 20);
             const notificationsHtml = topPerformers.map(hashtag => `
                 <p>🎉 ${hashtag.hashtag_name} has reached ${parseInt(hashtag.views).toLocaleString()} views!</p>
             `).join('');
             document.getElementById('topPerformingHashtags').innerHTML = notificationsHtml;
-        }
-
-        function updateInteractiveFilters() {
-            const countries = [...new Set(data.map(row => row.country_code))];
-            const ageGroups = [...new Set(data.map(row => row.age_group))];
-            
-            const filtersHtml = `
-                <label for="countryFilter">Country:</label>
-                <select id="countryFilter">
-                    <option value="all">All</option>
-                    ${countries.map(country => `<option value="${country}">${country}</option>`).join('')}
-                </select>
-                <label for="ageFilter">Age Group:</label>
-                <select id="ageFilter">
-                    <option value="all">All</option>
-                    ${ageGroups.map(age => `<option value="${age}">${age}</option>`).join('')}
-                </select>
-            `;
-            document.getElementById('countryAgeFilters').innerHTML = filtersHtml;
-            
-            // Date range selector (simplified version)
-            document.getElementById('dateRangeSelector').innerHTML = `
-                <input type="date" id="startDate">
-                <input type="date" id="endDate">
-            `;
         }
 
         function updateMostEngagedPosts() {
@@ -713,6 +734,14 @@
                 }
             });
         }
+
+        // Add event listeners for segmentation inputs
+        document.querySelectorAll('input[name="country"], input[name="views"], input[name="age_group"]').forEach(input => {
+            input.addEventListener('change', () => {
+                applySegmentation();
+                updateCharts();
+            });
+        });
     </script>
 </body>
 </html>
