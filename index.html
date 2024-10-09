@@ -3,716 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Visualization App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <title>Vit Paolo Aquino - Full Stack Developer</title>
     <style>
-        body, html {
+        :root {
+            --primary-color: #333333;
+            --secondary-color: #666666;
+            --background-color: #87CEEB;
+            --card-background: rgba(255, 255, 255, 0.8);
+            --animation-duration: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        body, html {
             font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
+            height: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
         }
+
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB, #E0F6FF);
+            overflow: hidden;
             padding: 20px;
         }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-        }
-        .logo {
-            width: 78px;
-            height: 76px;
-        }
-        nav ul {
-            display: flex;
-            list-style-type: none;
-        }
-        nav ul li {
-            margin-left: 20px;
-        }
-        nav ul li a {
-            color: #fff;
-            text-decoration: none;
-        }
-        .widget {
-            background-color: #1a1a1a;
+
+        .profile-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--card-background);
             border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             padding: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid white;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .job-title {
+            color: var(--secondary-color);
+            font-size: 16px;
             margin-bottom: 20px;
         }
-        .widget h2 {
-            margin-top: 0;
-            color: #ff5722;
+
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+
+        .skill {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color var(--animation-duration) ease;
         }
-        #fileInput, #loadButton {
+
+        .skill:hover {
+            background-color: #45a049;
+        }
+
+        .section-content {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            padding: 20px;
+            display: none;
+        }
+
+        .section-content h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
             margin-bottom: 20px;
+        }
+
+        .section-content h3 {
+            color: var(--secondary-color);
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .section-content ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .section-content ul li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .section-content ul li::before {
+            content: '•';
+            color: var(--secondary-color);
+            position: absolute;
+            left: 0;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        @keyframes float {
+            from { transform: translateX(-100px); }
+            to { transform: translateX(calc(100vw + 100px)); }
+        }
+
+        @media (max-width: 768px) {
+            .profile-card {
+                position: relative;
+                top: auto;
+                left: auto;
+                transform: none;
+                margin: 20px auto;
+            }
         }
     </style>
+	
+<script>
+ var vapiInstance = null;
+ const assistant = "8c7bd01f-1e49-43d7-b3b6-492011c0fb40"; 
+ const apiKey = "7c879135-dbd1-4969-bf1f-8dbbbb2f7eb5"; 
+ const buttonConfig = {}; 
+
+ (function (d, t) {
+ var g = document.createElement(t),
+ s = d.getElementsByTagName(t)[0];
+ g.src =
+ "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+ g.defer = true;
+ g.async = true;
+ s.parentNode.insertBefore(g, s);
+
+ g.onload = function () {
+ vapiInstance = window.vapiSDK.run({
+ apiKey: apiKey, // mandatory
+ assistant: assistant, // mandatory
+ config: buttonConfig, // optional
+ });
+ };
+ })(document, "script");
+</script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <img src="https://static.wixstatic.com/media/9ad982_c5c91a4c5188461cbe35b863d663c4b9~mv2.png/v1/fill/w_78,h_76,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/New%20Logo.png" alt="Logo" class="logo">
-            <nav>
-                <ul>
-                    <li><a href="#" onclick="showPage('dashboard')">Dashboard</a></li>
-                    <li><a href="#" onclick="showPage('insights')">Insights</a></li>
-                    <li><a href="#" onclick="showPage('settings')">Settings</a></li>
-                </ul>
-            </nav>
-        </header>
-
-        <input type="file" id="fileInput" accept=".csv">
-        <button id="loadButton">Load Visualizations</button>
-
-        <div id="dashboard" class="page">
-            <div class="grid">
-                <div class="widget">
-                    <h2>Hashtag Performance</h2>
-                    <canvas id="hashtagPerformance"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Rank Position Over Time</h2>
-                    <canvas id="rankPositionOverTime"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Rank Change</h2>
-                    <canvas id="rankChange"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Global vs. Local Analytics</h2>
-                    <canvas id="globalVsLocal"></canvas>
-                    <div id="topCountries"></div>
-                </div>
-                <div class="widget">
-                    <h2>Age Group Engagement</h2>
-                    <canvas id="ageGroupEngagement"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Country Performance by Age Group</h2>
-                    <canvas id="countryPerformanceByAgeGroup"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Trends Over Time</h2>
-                    <canvas id="trendsOverTime"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Top Hashtags Over Time</h2>
-                    <canvas id="topHashtagsOverTime"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Views Per Post</h2>
-                    <canvas id="viewsPerPost"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Views By Category</h2>
-                    <canvas id="viewsByCategory"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Side-by-Side Comparison</h2>
-                    <div id="sideBySideComparison"></div>
-                </div>
-                <div class="widget">
-                    <h2>Top Hashtags Comparison</h2>
-                    <div id="topHashtagsComparison"></div>
-                </div>
-                <div class="widget">
-                    <h2>Rank Change Alerts</h2>
-                    <div id="rankChangeAlerts"></div>
-                </div>
-                <div class="widget">
-                    <h2>Top Performing Hashtags</h2>
-                    <div id="topPerformingHashtags"></div>
-                </div>
-                <div class="widget">
-                    <h2>Interactive Filters</h2>
-                    <div id="countryAgeFilters"></div>
-                    <div id="dateRangeSelector"></div>
-                </div>
-                <div class="widget">
-                    <h2>Most Engaged Posts</h2>
-                    <div id="mostEngagedPosts"></div>
-                </div>
-                <div class="widget">
-                    <h2>Category Performance</h2>
-                    <canvas id="categoryPerformance"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Historical Rank Comparison</h2>
-                    <canvas id="historicalRankComparison"></canvas>
-                </div>
-                <div class="widget">
-                    <h2>Rank Change Distribution</h2>
-                    <canvas id="rankChangeDistribution"></canvas>
-                </div>
+        <div class="profile-card">
+            <img src="https://ga-core.s3.amazonaws.com/production/uploads/instructor/image/7539/0a76b26.jpg" alt="Vitt" class="profile-image">
+            <h1>Vit Paolo Aquino</h1>
+            <p class="job-title">Full Stack Developer</p>
+            <div class="skills">
+                <span class="skill" data-target="background">Background</span>
+                <span class="skill" data-target="education">Education</span>
+                <span class="skill" data-target="more">More About Me</span>
+			<p class="job-title">For a TL;DR conversation, send me an email here: vitt [dot] aquino [at] gmail<br>Or click the call button below to chat with my pre trained AI assistant.</p>	
             </div>
         </div>
 
-        <div id="insights" class="page" style="display: none;">
-            <!-- Insights content -->
+        <div id="background" class="section-content">
+            <h2>Background</h2>
+            <h3>Work Experience</h3>
+            <ul>
+                <li>Publicis Groupe: Digital Integrations Tech Lead (Apr 2022-Present)</li>
+				<li>Contributing Developer - The Odin Project (Feb 2018-Present)</li>
+                <li>PaperCut - Senior Front End Developer (Dec 2016-Dec 2018)</li>
+                <li>Acquire Learning - Front End Developer (May 2015-Dec 2016)</li>
+            </ul>
+            <h3>Skills</h3>
+            <ul>
+                <li>Front End: React, Vue, TypeScript, CSS, html, JavaScript</li>
+                <li>Back End: Python, Node JS, PHP, MySQL</li>
+                <li>Others: Git, Docker, TensorFlow, Drupal, WordPress, Woo Commerce, Shopify</li>
+            </ul>
         </div>
 
-        <div id="settings" class="page" style="display: none;">
-            <!-- Settings content -->
+        <div id="education" class="section-content">
+            <h2>Education</h2>
+            <h3>Formal Education</h3>
+            <ul>
+                <li>Business Analytics Program - Harvard University (2021)</li>
+                <li>Masters in Information Technology - Swinburne University (2016)</li>
+            </ul>
+            <h3>Certifications</h3>
+            <ul>
+                <li>AWS Certified Developer - Associate</li>
+                <li>Google Analytics Individual Qualification</li>
+            </ul>
+        </div>
+
+        <div id="more" class="section-content">
+            <h2>More About Me</h2>
+            <h3>Interests</h3>
+            <ul>
+                <li>Mixed martial arts hobbyist</li>
+                <li>AI and machine learning enthusiast</li>
+                <li>Former semi pro Musician</li>
+            </ul>
+            <h3>Projects and Achievements</h3>
+            <ul>
+				<li>Voice AI assistant training</li>
+                <li>VueJS modular and accessible library</li>
+                <li>Google Honours 2022 Cohort</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        let data = [];
-        let charts = {};
+        document.addEventListener('DOMContentLoaded', () => {
+            const skills = document.querySelectorAll('.skill');
+            const sections = document.querySelectorAll('.section-content');
+            const container = document.querySelector('.container');
+            let activeSection = null;
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
-            document.getElementById(pageId).style.display = 'block';
-        }
+            skills.forEach(skill => {
+                skill.addEventListener('click', () => {
+                    const targetId = skill.getAttribute('data-target');
+                    const targetSection = document.getElementById(targetId);
 
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            Papa.parse(file, {
-                header: true,
-                complete: function(results) {
-                    data = results.data;
-                }
+                    if (activeSection === targetSection) {
+                        targetSection.style.display = 'none';
+                        activeSection = null;
+                    } else {
+                        sections.forEach(section => {
+                            section.style.display = 'none';
+                        });
+                        targetSection.style.display = 'block';
+                        activeSection = targetSection;
+
+                        setTimeout(() => {
+                            const yOffset = -20;
+                            const y = targetSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                            window.scrollTo({top: y, behavior: 'smooth'});
+                        }, 0);
+                    }
+                });
             });
-        });
 
-        document.getElementById('loadButton').addEventListener('click', function() {
-            if (data.length > 0) {
-                updateCharts();
-            } else {
-                alert('Please select a CSV file first.');
+            function createCloud() {
+                const cloud = document.createElement('div');
+                cloud.classList.add('cloud');
+                cloud.style.width = `${50 + Math.random() * 100}px`;
+                cloud.style.height = `${20 + Math.random() * 40}px`;
+                cloud.style.top = `${Math.random() * 60}%`;
+                cloud.style.left = '-100px';
+                cloud.style.animationDuration = `${15 + Math.random() * 10}s`;
+                cloud.style.opacity = Math.random() * 0.3 + 0.4;
+
+                cloud.style.setProperty('--cloud-before-width', `${cloud.offsetWidth * 0.4}px`);
+                cloud.style.setProperty('--cloud-before-height', `${cloud.offsetHeight * 0.8}px`);
+                cloud.style.setProperty('--cloud-after-width', `${cloud.offsetWidth * 0.6}px`);
+                cloud.style.setProperty('--cloud-after-height', `${cloud.offsetHeight * 1.1}px`);
+
+                container.appendChild(cloud);
+
+                setTimeout(() => {
+                    cloud.remove();
+                }, 25000);
             }
+
+            setInterval(createCloud, 3000);
         });
-
-        function updateCharts() {
-            updateHashtagPerformance();
-            updateRankPositionOverTime();
-            updateRankChange();
-            updateGlobalVsLocal();
-            updateTopCountries();
-            updateAgeGroupEngagement();
-            updateCountryPerformanceByAgeGroup();
-            updateTrendsOverTime();
-            updateTopHashtagsOverTime();
-            updateViewsPerPost();
-            updateViewsByCategory();
-            updateSideBySideComparison();
-            updateTopHashtagsComparison();
-            updateRankChangeAlerts();
-            updateTopPerformingHashtags();
-            updateInteractiveFilters();
-            updateMostEngagedPosts();
-            updateCategoryPerformance();
-            updateHistoricalRankComparison();
-            updateRankChangeDistribution();
-        }
-
-        function createOrUpdateChart(chartId, config) {
-            const ctx = document.getElementById(chartId).getContext('2d');
-            if (charts[chartId]) {
-                charts[chartId].data = config.data;
-                charts[chartId].options = config.options;
-                charts[chartId].update();
-            } else {
-                charts[chartId] = new Chart(ctx, config);
-            }
-        }
-
-        function updateHashtagPerformance() {
-            createOrUpdateChart('hashtagPerformance', {
-                type: 'bar',
-                data: {
-                    labels: data.slice(0, 10).map(row => row.hashtag_name),
-                    datasets: [
-                        {
-                            label: 'Posts',
-                            data: data.slice(0, 10).map(row => parseInt(row.posts)),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
-                        },
-                        {
-                            label: 'Views',
-                            data: data.slice(0, 10).map(row => parseInt(row.views)),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateRankPositionOverTime() {
-            createOrUpdateChart('rankPositionOverTime', {
-                type: 'line',
-                data: {
-                    labels: data.slice(0, 10).map(row => row.hashtag_name),
-                    datasets: [{
-                        label: 'Rank Position',
-                        data: data.slice(0, 10).map(row => parseInt(row.rank_position)),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            reverse: true,
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateRankChange() {
-            const rankChanges = data.map(row => parseInt(row.rank_change));
-            const increased = rankChanges.filter(change => change > 0).length;
-            const decreased = rankChanges.filter(change => change < 0).length;
-            const unchanged = rankChanges.filter(change => change === 0).length;
-
-            createOrUpdateChart('rankChange', {
-                type: 'pie',
-                data: {
-                    labels: ['Increased', 'Decreased', 'Unchanged'],
-                    datasets: [{
-                        data: [increased, decreased, unchanged],
-                        backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 99, 132, 0.5)', 'rgba(255, 206, 86, 0.5)']
-                    }]
-                },
-                options: {
-                    responsive: true
-                }
-            });
-        }
-
-        function updateGlobalVsLocal() {
-            createOrUpdateChart('globalVsLocal', {
-                type: 'bar',
-                data: {
-                    labels: data.slice(0, 5).map(row => row.hashtag_name),
-                    datasets: [
-                        {
-                            label: 'Global Lifetime Views',
-                            data: data.slice(0, 5).map(row => parseInt(row.views_global_lifetime)),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
-                        },
-                        {
-                            label: 'Current Views',
-                            data: data.slice(0, 5).map(row => parseInt(row.views)),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateTopCountries() {
-            const topCountries = data[0].top_country_list.split(',');
-            const topCountriesHtml = topCountries.map(country => `<div>${country}</div>`).join('');
-            document.getElementById('topCountries').innerHTML = `<h3>Top Countries:</h3>${topCountriesHtml}`;
-        }
-
-        function updateAgeGroupEngagement() {
-            createOrUpdateChart('ageGroupEngagement', {
-                type: 'bar',
-                data: {
-                    labels: ['18-24', '25-34', '35+'],
-                    datasets: [{
-                        label: 'Engagement',
-                        data: [
-                            parseFloat(data[0].percentage) * 100,
-                            parseFloat(data[1].percentage) * 100,
-                            parseFloat(data[2].percentage) * 100
-                        ],
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Percentage'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateCountryPerformanceByAgeGroup() {
-            const countries = [...new Set(data.map(row => row.country_code))];
-            createOrUpdateChart('countryPerformanceByAgeGroup', {
-                type: 'bar',
-                data: {
-                    labels: countries,
-                    datasets: [
-                        {
-                            label: '18-24',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '18-24');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
-                        },
-                        {
-                            label: '25-34',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '25-34');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
-                        },
-                        {
-                            label: '35+',
-                            data: countries.map(country => {
-                                const row = data.find(r => r.country_code === country && r.age_group === '35+');
-                                return row ? parseFloat(row.percentage) * 100 : 0;
-                            }),
-                            backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            stacked: true,
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                
-                                text: 'Percentage'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateTrendsOverTime() {
-            createOrUpdateChart('trendsOverTime', {
-                type: 'line',
-                data: {
-                    labels: data.slice(0, 10).map(row => row.hashtag_name),
-                    datasets: [{
-                        label: 'Views',
-                        data: data.slice(0, 10).map(row => parseInt(row.views)),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateTopHashtagsOverTime() {
-            createOrUpdateChart('topHashtagsOverTime', {
-                type: 'line',
-                data: {
-                    labels: data.slice(0, 5).map(row => row.hashtag_name),
-                    datasets: [{
-                        label: 'Rank Position',
-                        data: data.slice(0, 5).map(row => parseInt(row.rank_position)),
-                        borderColor: 'rgb(255, 99, 132)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            reverse: true,
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateViewsPerPost() {
-            createOrUpdateChart('viewsPerPost', {
-                type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Views per Post',
-                        data: data.map(row => ({
-                            x: parseInt(row.posts),
-                            y: parseInt(row.views)
-                        })),
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            position: 'bottom',
-                            title: {
-                                display: true,
-                                text: 'Posts'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Views'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateViewsByCategory() {
-            const categories = [...new Set(data.map(row => row.category_name))];
-            const viewsByCategory = categories.map(category => ({
-                category,
-                views: data.filter(row => row.category_name === category)
-                    .reduce((sum, row) => sum + parseInt(row.views), 0)
-            }));
-
-            createOrUpdateChart('viewsByCategory', {
-                type: 'pie',
-                data: {
-                    labels: viewsByCategory.map(item => item.category),
-                    datasets: [{
-                        data: viewsByCategory.map(item => item.views),
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.5)',
-                            'rgba(54, 162, 235, 0.5)',
-                            'rgba(255, 206, 86, 0.5)',
-                            'rgba(75, 192, 192, 0.5)',
-                            'rgba(153, 102, 255, 0.5)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true
-                }
-            });
-        }
-
-        function updateSideBySideComparison() {
-            const topHashtags = data.slice(0, 3);
-            const comparisonHtml = topHashtags.map(hashtag => `
-                <div>
-                    <h3>${hashtag.hashtag_name}</h3>
-                    <p>Views: ${parseInt(hashtag.views).toLocaleString()}</p>
-                    <p>Posts: ${parseInt(hashtag.posts).toLocaleString()}</p>
-                    <p>Rank Change: ${hashtag.rank_change}</p>
-                </div>
-            `).join('');
-            document.getElementById('sideBySideComparison').innerHTML = comparisonHtml;
-        }
-
-        function updateTopHashtagsComparison() {
-            const topHashtags = data.slice(0, 5);
-            const comparisonHtml = `
-                <table>
-                    <tr>
-                        <th>Hashtag</th>
-                        <th>Rank</th>
-                        <th>Views</th>
-                        <th>Posts</th>
-                    </tr>
-                    ${topHashtags.map(hashtag => `
-                        <tr>
-                            <td>${hashtag.hashtag_name}</td>
-                            <td>${hashtag.rank_position}</td>
-                            <td>${parseInt(hashtag.views).toLocaleString()}</td>
-                            <td>${parseInt(hashtag.posts).toLocaleString()}</td>
-                        </tr>
-                    `).join('')}
-                </table>
-            `;
-            document.getElementById('topHashtagsComparison').innerHTML = comparisonHtml;
-        }
-
-        function updateRankChangeAlerts() {
-            const significantChanges = data
-                .filter(row => Math.abs(parseInt(row.rank_change)) > 5)
-                .slice(0, 20); // Limit to 20 items
-            const alertsHtml = significantChanges.map(hashtag => `
-                <p>🚨 ${hashtag.hashtag_name} has changed its rank by ${hashtag.rank_change} positions.</p>
-            `).join('');
-            document.getElementById('rankChangeAlerts').innerHTML = alertsHtml;
-        }
-
-        function updateTopPerformingHashtags() {
-            const topPerformers = data
-                .filter(row => parseInt(row.views) > 1000000)
-                .sort((a, b) => parseInt(b.views) - parseInt(a.views))
-                .slice(0, 20); // Limit to 20 items
-            const notificationsHtml = topPerformers.map(hashtag => `
-                <p>🎉 ${hashtag.hashtag_name} has reached ${parseInt(hashtag.views).toLocaleString()} views!</p>
-            `).join('');
-            document.getElementById('topPerformingHashtags').innerHTML = notificationsHtml;
-        }
-
-        function updateInteractiveFilters() {
-            const countries = [...new Set(data.map(row => row.country_code))];
-            const ageGroups = [...new Set(data.map(row => row.age_group))];
-            
-            const filtersHtml = `
-                <label for="countryFilter">Country:</label>
-                <select id="countryFilter">
-                    <option value="all">All</option>
-                    ${countries.map(country => `<option value="${country}">${country}</option>`).join('')}
-                </select>
-                <label for="ageFilter">Age Group:</label>
-                <select id="ageFilter">
-                    <option value="all">All</option>
-                    ${ageGroups.map(age => `<option value="${age}">${age}</option>`).join('')}
-                </select>
-            `;
-            document.getElementById('countryAgeFilters').innerHTML = filtersHtml;
-            
-            // Date range selector (simplified version)
-            document.getElementById('dateRangeSelector').innerHTML = `
-                <input type="date" id="startDate">
-                <input type="date" id="endDate">
-            `;
-        }
-
-        function updateMostEngagedPosts() {
-            const topPosts = data.slice(0, 5).sort((a, b) => parseInt(b.views) - parseInt(a.views));
-            const postsHtml = topPosts.map(post => `
-                <div>
-                    <h4>${post.hashtag_name}</h4>
-                    <p>Views: ${parseInt(post.views).toLocaleString()}</p>
-                    <p>Posts: ${parseInt(post.posts).toLocaleString()}</p>
-                </div>
-            `).join('');
-            document.getElementById('mostEngagedPosts').innerHTML = postsHtml;
-        }
-
-        function updateCategoryPerformance() {
-            const categories = [...new Set(data.map(row => row.category_name))];
-            createOrUpdateChart('categoryPerformance', {
-                type: 'bar',
-                data: {
-                    labels: categories,
-                    datasets: [{
-                        label: 'Views',
-                        data: categories.map(category => 
-                            data.filter(row => row.category_name === category)
-                                .reduce((sum, row) => sum + parseInt(row.views), 0)
-                        ),
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Total Views'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateHistoricalRankComparison() {
-            createOrUpdateChart('historicalRankComparison', {
-                type: 'line',
-                data: {
-                    labels: data.slice(0, 10).map(row => row.hashtag_name),
-                    datasets: [{
-                        label: 'Rank Position',
-                        data: data.slice(0, 10).map(row => parseInt(row.rank_position)),
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            reverse: true,
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateRankChangeDistribution() {
-            const rankChanges = data.map(row => parseInt(row.rank_change));
-            createOrUpdateChart('rankChangeDistribution', {
-                type: 'bar',
-                data: {
-                    labels: ['< -10', '-10 to -5', '-5 to 0', '0 to 5', '5 to 10', '> 10'],
-                    datasets: [{
-                        label: 'Rank Change Distribution',
-                        data: [
-                            rankChanges.filter(change => change < -10).length,
-                            rankChanges.filter(change => change >= -10 && change < -5).length,
-                            rankChanges.filter(change => change >= -5 && change < 0).length,
-                            rankChanges.filter(change => change >= 0 && change < 5).length,
-                            rankChanges.filter(change => change >= 5 && change <= 10).length,
-                            rankChanges.filter(change => change > 10).length
-                        ],
-                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Hashtags'
-                            }
-                        }
-                    }
-                }
-            });
-        }
     </script>
 </body>
 </html>
