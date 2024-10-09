@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Trend Analyzer</title>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <title>Data Visualization App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         body, html {
             margin: 0;
             padding: 0;
-            font-family: 'Arial', sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
         }
         .container {
             max-width: 1200px;
@@ -22,8 +23,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #333;
+            padding: 10px 0;
         }
         .logo {
             width: 78px;
@@ -32,86 +32,45 @@
         nav ul {
             display: flex;
             list-style-type: none;
-            padding: 0;
         }
         nav ul li {
             margin-left: 20px;
         }
         nav ul li a {
-            color: #ffffff;
+            color: #fff;
             text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s ease;
         }
-        nav ul li a:hover {
-            color: #4a90e2;
+        .widget {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
         }
-        .page {
-            margin-top: 20px;
+        .widget h2 {
+            margin-top: 0;
+            color: #ff5722;
         }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
         }
-        .widget {
-            background-color: #2c2c2c;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        #fileInput, #loadButton {
+            margin-bottom: 20px;
         }
-        .widget h2 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 18px;
+        .segmentation-box {
+            background-color: #2a2a2a;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .segmentation-box summary {
+            cursor: pointer;
             font-weight: bold;
         }
-        .widget-container {
-            width: 100%;
-            height: 300px;
-        }
-        #keywordInput {
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            border-radius: 5px 0 0 5px;
-        }
-        #analyzeButton {
-            margin: 20px 0;
-            padding: 10px 20px;
-            background-color: #4a90e2;
-            color: #fff;
-            border: none;
-            border-radius: 0 5px 5px 0;
-            cursor: pointer;
-        }
-        #analyzeButton:hover {
-            background-color: #3a7bc8;
-        }
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .loading-text {
-            font-size: 24px;
-            color: #fff;
-        }
-        .related-hashtag {
-            color: #4a90e2;
-            text-decoration: none;
-        }
-        .related-hashtag:hover {
-            text-decoration: underline;
+        .segmentation-box label {
+            display: block;
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -128,29 +87,113 @@
             </nav>
         </header>
 
+        <input type="file" id="fileInput" accept=".csv">
+        <button id="loadButton">Load Visualizations</button>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Top Country List</summary>
+                <label><input type="checkbox" name="country" value="US"> US</label>
+                <label><input type="checkbox" name="country" value="PK"> PK</label>
+                <label><input type="checkbox" name="country" value="GB"> GB</label>
+                <label><input type="checkbox" name="country" value="ID"> ID</label>
+                <label><input type="checkbox" name="country" value="DE"> DE</label>
+            </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Views</summary>
+                <label><input type="checkbox" name="views" value="5000000000"> More than 5 billion</label>
+                <label><input type="checkbox" name="views" value="3000000000"> More than 3 billion</label>
+                <label><input type="checkbox" name="views" value="1000000000"> More than 1 billion</label>
+                <label><input type="checkbox" name="views" value="999999999"> Less than 1 billion</label>
+            </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Age Group</summary>
+                <label><input type="checkbox" name="age_group" value="18-24"> 18-24</label>
+                <label><input type="checkbox" name="age_group" value="25-34"> 25-34</label>
+                <label><input type="checkbox" name="age_group" value="35+"> 35+</label>
+            </details>
+        </div>
+
         <div id="dashboard" class="page">
-            <input type="text" id="keywordInput" placeholder="Enter a keyword">
-            <button id="analyzeButton" onclick="analyzeTrends()">Analyze Trends</button>
             <div class="grid">
                 <div class="widget">
-                    <h2>Related Searches</h2>
-                    <div id="communityGraph" class="widget-container"></div>
+                    <h2>Hashtag Performance</h2>
+                    <canvas id="hashtagPerformance"></canvas>
                 </div>
                 <div class="widget">
-                    <h2>Top Related Keywords</h2>
-                    <div id="topKeywords" class="widget-container"></div>
+                    <h2>Rank Position Over Time</h2>
+                    <canvas id="rankPositionOverTime"></canvas>
                 </div>
                 <div class="widget">
-                    <h2>Hashtag Popularity</h2>
-                    <div id="hashtagPopularity" class="widget-container"></div>
+                    <h2>Rank Change</h2>
+                    <canvas id="rankChange"></canvas>
                 </div>
                 <div class="widget">
-                    <h2>Video Count Analysis</h2>
-                    <div id="videoCountAnalysis" class="widget-container"></div>
+                    <h2>Global vs. Local Analytics</h2>
+                    <canvas id="globalVsLocal"></canvas>
+                    <div id="topCountries"></div>
                 </div>
                 <div class="widget">
-                    <h2>Related Hashtags</h2>
-                    <div id="relatedHashtags" class="widget-container"></div>
+                    <h2>Age Group Engagement</h2>
+                    <canvas id="ageGroupEngagement"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Country Performance by Age Group</h2>
+                    <canvas id="countryPerformanceByAgeGroup"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Trends Over Time</h2>
+                    <canvas id="trendsOverTime"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Top Hashtags Over Time</h2>
+                    <canvas id="topHashtagsOverTime"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Views Per Post</h2>
+                    <canvas id="viewsPerPost"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Views By Category</h2>
+                    <canvas id="viewsByCategory"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Side-by-Side Comparison</h2>
+                    <div id="sideBySideComparison"></div>
+                </div>
+                <div class="widget">
+                    <h2>Top Hashtags Comparison</h2>
+                    <div id="topHashtagsComparison"></div>
+                </div>
+                <div class="widget">
+                    <h2>Rank Change Alerts</h2>
+                    <div id="rankChangeAlerts"></div>
+                </div>
+                <div class="widget">
+                    <h2>Top Performing Hashtags</h2>
+                    <div id="topPerformingHashtags"></div>
+                </div>
+                <div class="widget">
+                    <h2>Most Engaged Posts</h2>
+                    <div id="mostEngagedPosts"></div>
+                </div>
+                <div class="widget">
+                    <h2>Category Performance</h2>
+                    <canvas id="categoryPerformance"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Historical Rank Comparison</h2>
+                    <canvas id="historicalRankComparison"></canvas>
+                </div>
+                <div class="widget">
+                    <h2>Rank Change Distribution</h2>
+                    <canvas id="rankChangeDistribution"></canvas>
                 </div>
             </div>
         </div>
@@ -164,147 +207,540 @@
         </div>
     </div>
 
-    <div class="loading" style="display: none;">
-        <div class="loading-text">Loading...</div>
-    </div>
-
     <script>
+        let data = [];
+        let originalData = [];
+        let charts = {};
+
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
             document.getElementById(pageId).style.display = 'block';
         }
 
-        async function fetchTikTokData(keyword) {
-            // Simulate an API call
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    const relatedSearches = [
-                        keyword,
-                        keyword + " challenge",
-                        keyword + " dance",
-                        keyword + " tutorial",
-                        keyword + " funny",
-                        keyword + " trend"
-                    ];
-                    const hashtags = [
-                        "#" + keyword,
-                        "#" + keyword + "challenge",
-                        "#" + keyword + "dance",
-                        "#" + keyword + "viral",
-                        "#" + keyword + "trend"
-                    ];
-                    const videoCounts = hashtags.map(() => Math.floor(Math.random() * 1000000));
-                    resolve({
-                        relatedSearches,
-                        hashtags,
-                        videoCounts
-                    });
-                }, 1000); // Simulate network delay
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    originalData = results.data;
+                    data = [...originalData];
+                    updateCharts();
+                }
+            });
+        });
+
+        document.getElementById('loadButton').addEventListener('click', function() {
+            if (originalData.length > 0) {
+                applySegmentation();
+                updateCharts();
+            } else {
+                alert('Please select a CSV file first.');
+            }
+        });
+
+        function applySegmentation() {
+            const selectedCountries = Array.from(document.querySelectorAll('input[name="country"]:checked')).map(el => el.value);
+            const selectedViews = Array.from(document.querySelectorAll('input[name="views"]:checked')).map(el => parseInt(el.value));
+            const selectedAgeGroups = Array.from(document.querySelectorAll('input[name="age_group"]:checked')).map(el => el.value);
+
+            data = originalData.filter(row => {
+                const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
+                const viewsMatch = selectedViews.length === 0 || selectedViews.some(viewThreshold => {
+                    const views = parseInt(row.views);
+                    return viewThreshold === 999999999 ? views < 1000000000 : views > viewThreshold;
+                });
+                const ageGroupMatch = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(row.age_group);
+                return countryMatch && viewsMatch && ageGroupMatch;
+            });
+
+            if (data.length === 0) {
+                data = [...originalData];
+                alert('No data matches the selected filters. Showing all data.');
+            }
+        }
+
+        function updateCharts() {
+            updateHashtagPerformance();
+            updateRankPositionOverTime();
+            updateRankChange();
+            updateGlobalVsLocal();
+            updateTopCountries();
+            updateAgeGroupEngagement();
+            updateCountryPerformanceByAgeGroup();
+            updateTrendsOverTime();
+            updateTopHashtagsOverTime();
+            updateViewsPerPost();
+            updateViewsByCategory();
+            updateSideBySideComparison();
+            updateTopHashtagsComparison();
+            updateRankChangeAlerts();
+            updateTopPerformingHashtags();
+            updateMostEngagedPosts();
+            updateCategoryPerformance();
+            updateHistoricalRankComparison();
+            updateRankChangeDistribution();
+        }
+
+        function createOrUpdateChart(chartId, config) {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+            }
+            charts[chartId] = new Chart(ctx, config);
+        }
+
+        function updateHashtagPerformance() {
+            createOrUpdateChart('hashtagPerformance', {
+                type: 'bar',
+                data: {
+                    labels: data.slice(0, 10).map(row => row.hashtag_name),
+                    datasets: [
+                        {
+                            label: 'Posts',
+                            data: data.slice(0, 10).map(row => parseInt(row.posts)),
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                        },
+                        {
+                            label: 'Views',
+                            data: data.slice(0, 10).map(row => parseInt(row.views)),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
         }
 
-        async function analyzeTrends() {
-            const keyword = document.getElementById('keywordInput').value;
-            document.querySelector('.loading').style.display = 'flex';
-            const data = await fetchTikTokData(keyword);
-            updateVisualizations(data);
-            document.querySelector('.loading').style.display = 'none';
-        }
-
-        function updateVisualizations(data) {
-            updateRelatedSearches(data.relatedSearches);
-            updateTopKeywords(data.relatedSearches);
-            updateHashtagPopularity(data.hashtags, data.videoCounts);
-            updateVideoCountAnalysis(data.hashtags, data.videoCounts);
-            updateRelatedHashtags(data.hashtags);
-        }
-
-        function updateRelatedSearches(relatedSearches) {
-            const graph = echarts.init(document.getElementById('communityGraph'));
-            const nodes = relatedSearches.map(search => ({ name: search }));
-            const links = relatedSearches.slice(1).map(search => ({
-                source: relatedSearches[0],
-                target: search
-            }));
-
-            const option = {
-                backgroundColor: '#2c2c2c',
-                series: [{
-                    type: 'graph',
-                    layout: 'force',
-                    data: nodes,
-                    links: links,
-                    roam: true,
-                    label: { show: true, color: '#ffffff' },
-                    force: { repulsion: 100 },
-                    lineStyle: { color: '#4a90e2' },
-                    itemStyle: { color: '#4a90e2' }
-                }]
-            };
-            graph.setOption(option);
-        }
-
-        function updateTopKeywords(relatedSearches) {
-            const topKeywordsElement = document.getElementById('topKeywords');
-            topKeywordsElement.innerHTML = relatedSearches.map(search => 
-                `<div style="margin-bottom: 10px; font-size: 16px;">${search}</div>`
-            ).join('');
-        }
-
-        function updateHashtagPopularity(hashtags, videoCounts) {
-            const chart = echarts.init(document.getElementById('hashtagPopularity'));
-            const option = {
-                backgroundColor: '#2c2c2c',
-                tooltip: { trigger: 'axis' },
-                xAxis: { type: 'category', data: hashtags, axisLabel: { color: '#ffffff' } },
-                yAxis: { type: 'value', name: 'Video Count', axisLabel: { color: '#ffffff' } },
-                series: [{
-                    data: videoCounts,
-                    type: 'bar',
-                    itemStyle: { color: '#4a90e2' }
-                }]
-            };
-            chart.setOption(option);
-        }
-
-        function updateVideoCountAnalysis(hashtags, videoCounts) {
-            const chart = echarts.init(document.getElementById('videoCountAnalysis'));
-            const option = {
-                backgroundColor: '#2c2c2c',
-                tooltip: { trigger: 'item' },
-                series: [{
-                    type: 'pie',
-                    radius: '50%',
-                    data: hashtags.map((hashtag, index) => ({
-                        value: videoCounts[index],
-                        name: hashtag
-                    })),
-                    label: { color: '#ffffff' },
-                    itemStyle: { 
-                        color: function(params) {
-                            const colors = ['#4a90e2', '#50C878', '#FFD700', '#9370DB', '#FF6347'];
-                            return colors[params.dataIndex % colors.length];
+        function updateRankPositionOverTime() {
+            createOrUpdateChart('rankPositionOverTime', {
+                type: 'line',
+                data: {
+                    labels: data.slice(0, 10).map(row => row.hashtag_name),
+                    datasets: [{
+                        label: 'Rank Position',
+                        data: data.slice(0, 10).map(row => parseInt(row.rank_position)),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            reverse: true,
+                            beginAtZero: true
                         }
                     }
-                }]
-            };
-            chart.setOption(option);
+                }
+            });
         }
 
-        function updateRelatedHashtags(hashtags) {
-            const relatedHashtagsElement = document.getElementById('relatedHashtags');
-            relatedHashtagsElement.innerHTML = hashtags.map(hashtag => 
-                `<div style="margin-bottom: 10px;">
-                    <a href="https://www.tiktok.com/search?q=${encodeURIComponent(hashtag)}" target="_blank" class="related-hashtag">${hashtag}</a>
-                </div>`
-            ).join('');
+        function updateRankChange() {
+            const rankChanges = data.map(row => parseInt(row.rank_change));
+            const increased = rankChanges.filter(change => change > 0).length;
+            const decreased = rankChanges.filter(change => change < 0).length;
+            const unchanged = rankChanges.filter(change => change === 0).length;
+
+            createOrUpdateChart('rankChange', {
+                type: 'pie',
+                data: {
+                    labels: ['Increased', 'Decreased', 'Unchanged'],
+                    datasets: [{
+                        data: [increased, decreased, unchanged],
+                        backgroundColor: ['rgba(75, 192, 192, 0.5)', 'rgba(255, 99, 132, 0.5)', 'rgba(255, 206, 86, 0.5)']
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
         }
 
-        // Initialize empty charts
-        updateVisualizations({
-            relatedSearches: ['example1', 'example2', 'example3'],
-            hashtags: ['#example1', '#example2', '#example3'],
-            videoCounts: [1000, 2000, 3000]
+        function updateGlobalVsLocal() {
+            createOrUpdateChart('globalVsLocal', {
+                type: 'bar',
+                data: {
+                    labels:  data.slice(0, 5).map(row => row.hashtag_name),
+                    datasets: [
+                        {
+                            label: 'Global Lifetime Views',
+                            data: data.slice(0, 5).map(row => parseInt(row.views_global_lifetime)),
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                        },
+                        {
+                            
+                            label: 'Current Views',
+                            data: data.slice(0, 5).map(row => parseInt(row.views)),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTopCountries() {
+            const topCountries = data[0]?.top_country_list.split(',') || [];
+            const topCountriesHtml = topCountries.map(country => `<div>${country}</div>`).join('');
+            document.getElementById('topCountries').innerHTML = `<h3>Top Countries:</h3>${topCountriesHtml}`;
+        }
+
+        function updateAgeGroupEngagement() {
+            const ageGroups = ['18-24', '25-34', '35+'];
+            const engagementData = ageGroups.map(age => {
+                const row = data.find(r => r.age_group === age);
+                return row ? parseFloat(row.percentage) * 100 : 0;
+            });
+
+            createOrUpdateChart('ageGroupEngagement', {
+                type: 'bar',
+                data: {
+                    labels: ageGroups,
+                    datasets: [{
+                        label: 'Engagement',
+                        data: engagementData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCountryPerformanceByAgeGroup() {
+            const countries = [...new Set(data.map(row => row.country_code))];
+            const ageGroups = ['18-24', '25-34', '35+'];
+            
+            createOrUpdateChart('countryPerformanceByAgeGroup', {
+                type: 'bar',
+                data: {
+                    labels: countries,
+                    datasets: ageGroups.map((age, index) => ({
+                        label: age,
+                        data: countries.map(country => {
+                            const row = data.find(r => r.country_code === country && r.age_group === age);
+                            return row ? parseFloat(row.percentage) * 100 : 0;
+                        }),
+                        backgroundColor: `rgba(${75 + index * 50}, 192, 192, 0.5)`
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTrendsOverTime() {
+            createOrUpdateChart('trendsOverTime', {
+                type: 'line',
+                data: {
+                    labels: data.slice(0, 10).map(row => row.hashtag_name),
+                    datasets: [{
+                        label: 'Views',
+                        data: data.slice(0, 10).map(row => parseInt(row.views)),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTopHashtagsOverTime() {
+            createOrUpdateChart('topHashtagsOverTime', {
+                type: 'line',
+                data: {
+                    labels: data.slice(0, 5).map(row => row.hashtag_name),
+                    datasets: [{
+                        label: 'Rank Position',
+                        data: data.slice(0, 5).map(row => parseInt(row.rank_position)),
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            reverse: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateViewsPerPost() {
+            createOrUpdateChart('viewsPerPost', {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Views per Post',
+                        data: data.map(row => ({
+                            x: parseInt(row.posts),
+                            y: parseInt(row.views)
+                        })),
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Posts'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Views'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateViewsByCategory() {
+            const categories = [...new Set(data.map(row => row.category_name))];
+            const viewsByCategory = categories.map(category => ({
+                category,
+                views: data.filter(row => row.category_name === category)
+                    .reduce((sum, row) => sum + parseInt(row.views), 0)
+            }));
+
+            createOrUpdateChart('viewsByCategory', {
+                type: 'pie',
+                data: {
+                    labels: viewsByCategory.map(item => item.category),
+                    datasets: [{
+                        data: viewsByCategory.map(item => item.views),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(153, 102, 255, 0.5)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function updateSideBySideComparison() {
+            const topHashtags = data.slice(0, 3);
+            const comparisonHtml = topHashtags.map(hashtag => `
+                <div>
+                    <h3>${hashtag.hashtag_name}</h3>
+                    <p>Views: ${parseInt(hashtag.views).toLocaleString()}</p>
+                    <p>Posts: ${parseInt(hashtag.posts).toLocaleString()}</p>
+                    <p>Rank Change: ${hashtag.rank_change}</p>
+                </div>
+            `).join('');
+            document.getElementById('sideBySideComparison').innerHTML = comparisonHtml;
+        }
+
+        function updateTopHashtagsComparison() {
+            const topHashtags = data.slice(0, 5);
+            const comparisonHtml = `
+                <table>
+                    <tr>
+                        <th>Hashtag</th>
+                        <th>Rank</th>
+                        <th>Views</th>
+                        <th>Posts</th>
+                    </tr>
+                    ${topHashtags.map(hashtag => `
+                        <tr>
+                            <td>${hashtag.hashtag_name}</td>
+                            <td>${hashtag.rank_position}</td>
+                            <td>${parseInt(hashtag.views).toLocaleString()}</td>
+                            <td>${parseInt(hashtag.posts).toLocaleString()}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+            document.getElementById('topHashtagsComparison').innerHTML = comparisonHtml;
+        }
+
+        function updateRankChangeAlerts() {
+            const significantChanges = data
+                .filter(row => Math.abs(parseInt(row.rank_change)) > 5)
+                .slice(0, 20);
+            const alertsHtml = significantChanges.map(hashtag => `
+                <p>🚨 ${hashtag.hashtag_name} has changed its rank by ${hashtag.rank_change} positions.</p>
+            `).join('');
+            document.getElementById('rankChangeAlerts').innerHTML = alertsHtml;
+        }
+
+        function updateTopPerformingHashtags() {
+            const topPerformers = data
+                .filter(row => parseInt(row.views) > 1000000)
+                .sort((a, b) => parseInt(b.views) - parseInt(a.views))
+                .slice(0, 20);
+            const notificationsHtml = topPerformers.map(hashtag => `
+                <p>🎉 ${hashtag.hashtag_name} has reached ${parseInt(hashtag.views).toLocaleString()} views!</p>
+            `).join('');
+            document.getElementById('topPerformingHashtags').innerHTML = notificationsHtml;
+        }
+
+        function updateMostEngagedPosts() {
+            const topPosts = data.slice(0, 5).sort((a, b) => parseInt(b.views) - parseInt(a.views));
+            const postsHtml = topPosts.map(post => `
+                <div>
+                    <h4>${post.hashtag_name}</h4>
+                    <p>Views: ${parseInt(post.views).toLocaleString()}</p>
+                    <p>Posts: ${parseInt(post.posts).toLocaleString()}</p>
+                </div>
+            `).join('');
+            document.getElementById('mostEngagedPosts').innerHTML = postsHtml;
+        }
+
+        function updateCategoryPerformance() {
+            const categories = [...new Set(data.map(row => row.category_name))];
+            createOrUpdateChart('categoryPerformance', {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        label: 'Views',
+                        data: categories.map(category => 
+                            data.filter(row => row.category_name === category)
+                                .reduce((sum, row) => sum + parseInt(row.views), 0)
+                        ),
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Total Views'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHistoricalRankComparison() {
+            createOrUpdateChart('historicalRankComparison', {
+                type: 'line',
+                data: {
+                    labels: data.slice(0, 10).map(row => row.hashtag_name),
+                    datasets: [{
+                        label: 'Rank Position',
+                        data: data.slice(0, 10).map(row => parseInt(row.rank_position)),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            reverse: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRankChangeDistribution() {
+            const rankChanges = data.map(row => parseInt(row.rank_change));
+            createOrUpdateChart('rankChangeDistribution', {
+                type: 'bar',
+                data: {
+                    labels: ['< -10', '-10 to -5', '-5 to 0', '0 to 5', '5 to 10', '> 10'],
+                    datasets: [{
+                        label: 'Rank Change Distribution',
+                        data: [
+                            rankChanges.filter(change => change < -10).length,
+                            rankChanges.filter(change => change >= -10 && change < -5).length,
+                            rankChanges.filter(change => change >= -5 && change < 0).length,
+                            rankChanges.filter(change => change >= 0 && change < 5).length,
+                            rankChanges.filter(change => change >= 5 && change <= 10).length,
+                            rankChanges.filter(change => change > 10).length
+                        ],
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Hashtags'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add event listeners for segmentation inputs
+        document.querySelectorAll('input[name="country"], input[name="views"], input[name="age_group"]').forEach(input => {
+            input.addEventListener('change', () => {
+                applySegmentation();
+                updateCharts();
+            });
         });
     </script>
 </body>
