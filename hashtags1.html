@@ -119,6 +119,13 @@
                 <label><input type="checkbox" name="age_group" value="35+"> 35+</label>
             </details>
         </div>
+		
+		<div class="date-picker">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate">
+        </div>
 
         <div id="dashboard" class="page">
             <div class="grid">
@@ -374,7 +381,8 @@
                 options: {
                     responsive: true,
                     scales: {
-                        y:  {
+                        
+                        y: {
                             beginAtZero: true
                         }
                     }
