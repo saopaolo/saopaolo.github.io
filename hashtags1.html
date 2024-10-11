@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Visualization App</title>
+    <title>TikTok Hashtag Analyzer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
@@ -72,6 +72,24 @@
             display: block;
             margin: 5px 0;
         }
+        .date-picker {
+            margin-bottom: 20px;
+        }
+        .date-picker label {
+            margin-right: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+        }
     </style>
 </head>
 <body>
@@ -113,11 +131,36 @@
 
         <div class="segmentation-box">
             <details>
-                <summary>Age Group</summary>
-                <label><input type="checkbox" name="age_group" value="18-24"> 18-24</label>
-                <label><input type="checkbox" name="age_group" value="25-34"> 25-34</label>
-                <label><input type="checkbox" name="age_group" value="35+"> 35+</label>
+                <summary>Content Volume</summary>
+                <label><input type="checkbox" name="content_volume" value="high"> High-volume (>500,000 posts)</label>
+                <label><input type="checkbox" name="content_volume" value="medium"> Medium-volume (100,000-500,000 posts)</label>
+                <label><input type="checkbox" name="content_volume" value="low"> Low-volume (<100,000 posts)</label>
             </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Hashtag Lifecycle</summary>
+                <label><input type="checkbox" name="lifecycle" value="new"> New/Emerging</label>
+                <label><input type="checkbox" name="lifecycle" value="mature"> Mature</label>
+                <label><input type="checkbox" name="lifecycle" value="declining"> Declining</label>
+            </details>
+        </div>
+
+        <div class="segmentation-box">
+            <details>
+                <summary>Audience Engagement</summary>
+                <label><input type="checkbox" name="engagement" value="high"> High Engagement</label>
+                <label><input type="checkbox" name="engagement" value="medium"> Medium Engagement</label>
+                <label><input type="checkbox" name="engagement" value="low"> Low Engagement</label>
+            </details>
+        </div>
+
+        <div class="date-picker">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate">
         </div>
 
         <div id="dashboard" class="page">
@@ -233,7 +276,9 @@
         function applySegmentation() {
             const selectedCountries = Array.from(document.querySelectorAll('input[name="country"]:checked')).map(el => el.value);
             const selectedViews = Array.from(document.querySelectorAll('input[name="views"]:checked')).map(el => parseInt(el.value));
-            const selectedAgeGroups = Array.from(document.querySelectorAll('input[name="age_group"]:checked')).map(el => el.value);
+            const selectedContentVolume = Array.from(document.querySelectorAll('input[name="content_volume"]:checked')).map(el => el.value);
+            const selectedLifecycle = Array.from(document.querySelectorAll('input[name="lifecycle"]:checked')).map(el => el.value);
+            const selectedEngagement = Array.from(document.querySelectorAll('input[name="engagement"]:checked')).map(el => el.value);
 
             data = originalData.filter(row => {
                 const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
@@ -241,14 +286,37 @@
                     const views = parseInt(row.views);
                     return viewThreshold === 999999999 ? views < 1000000000 : views >= viewThreshold;
                 });
-                const ageGroupMatch = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(row.age_group);
-                return countryMatch && viewsMatch && ageGroupMatch;
+                const contentVolumeMatch = selectedContentVolume.length === 0 || selectedContentVolume.some(volume => {
+                    const posts = parseInt(row.posts);
+                    if (volume === 'high') return posts > 500000;
+                    if (volume === 'medium') return posts >= 100000 && posts <= 500000;
+                    if (volume === 'low') return posts < 100000;
+                    return true;
+                });
+                const lifecycleMatch = selectedLifecycle.length === 0 || selectedLifecycle.includes(getHashtagLifecycle(row));
+                const engagementMatch = selectedEngagement.length === 0 || selectedEngagement.includes(getEngagementLevel(row));
+
+                return countryMatch && viewsMatch && contentVolumeMatch && lifecycleMatch && engagementMatch;
             });
 
             if (data.length === 0) {
                 data = [...originalData];
                 alert('No data matches the selected filters. Showing all data.');
             }
+        }
+
+        function getHashtagLifecycle(row) {
+            const rankChange = parseInt(row.rank_change);
+            if (rankChange > 10) return 'new';
+            if (rankChange < -10) return 'declining';
+            return 'mature';
+        }
+
+        function getEngagementLevel(row) {
+            const viewsPerPost = parseInt(row.views) / parseInt(row.posts);
+            if (viewsPerPost > 10000) return 'high';
+            if (viewsPerPost > 1000) return 'medium';
+            return 'low';
         }
 
         function updateCharts() {
@@ -288,7 +356,7 @@
                         {
                             label: 'Posts',
                             data: data.slice(0, 10).map(row => parseInt(row.posts)),
-                            backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                            backgroundColor:  'rgba(255, 99, 132, 0.5)'
                         },
                         {
                             label: 'Views',
@@ -374,7 +442,7 @@
                 options: {
                     responsive: true,
                     scales: {
-                        y:   {
+                        y: {
                             beginAtZero: true
                         }
                     }
@@ -658,7 +726,7 @@
         }
 
         // Add event listeners for segmentation inputs
-        document.querySelectorAll('input[name="country"], input[name="views"], input[name="age_group"]').forEach(input => {
+        document.querySelectorAll('input[name="country"], input[name="views"], input[name="content_volume"], input[name="lifecycle"], input[name="engagement"]').forEach(input => {
             input.addEventListener('change', () => {
                 if (originalData.length > 0) {
                     applySegmentation();
@@ -666,6 +734,23 @@
                 }
             });
         });
+
+        // Add event listeners for date picker
+        document.getElementById('startDate').addEventListener('change', applyDateFilter);
+        document.getElementById('endDate').addEventListener('change', applyDateFilter);
+
+        function applyDateFilter() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate && endDate) {
+                data = originalData.filter(row => {
+                    const rowDate = new Date(row.date_range.split('-')[0]);
+                    return rowDate >= new Date(startDate) && rowDate <= new Date(endDate);
+                });
+                updateCharts();
+            }
+        }
     </script>
 </body>
 </html>
