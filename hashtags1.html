@@ -110,12 +110,18 @@
 
         <div class="segmentation-box">
             <details>
+                <summary>Hashtag Group Segmentation</summary>
+                <label for="gmDropdown">Select GM:</label>
+                <select id="gmDropdown" name="gmDropdown">
+                    <option value="">-- Select GM --</option>
+                </select>
+            </details>
+        </div>
+   
+        <div class="segmentation-box">
+            <details>
                 <summary>Top Country List</summary>
-                <label><input type="checkbox" name="country" value="US"> US</label>
-                <label><input type="checkbox" name="country" value="PK"> PK</label>
-                <label><input type="checkbox" name="country" value="GB"> GB</label>
-                <label><input type="checkbox" name="country" value="ID"> ID</label>
-                <label><input type="checkbox" name="country" value="DE"> DE</label>
+                <div id="countryCheckboxes"></div>
             </details>
         </div>
 
@@ -246,12 +252,7 @@
         let data = [];
         let originalData = [];
         let charts = {};
-
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
-            document.getElementById(pageId).style.display = 'block';
-        }
-
+        
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             Papa.parse(file, {
@@ -260,20 +261,50 @@
                     originalData = results.data;
                     data = [...originalData];
                     updateCharts();
+                    populateGMDropdown();
+                    populateCountryCheckboxes();
                 }
             });
         });
 
-        document.getElementById('loadButton').addEventListener('click', function() {
-            if (originalData.length > 0) {
-                applySegmentation();
-                updateCharts();
-            } else {
-                alert('Please select a CSV file first.');
-            }
+        function populateGMDropdown() {
+            const gmValues = [...new Set(originalData.map(row => row.FINAL_SEG))].sort((a, b) => a.localeCompare(b));
+            const gmDropdown = document.getElementById('gmDropdown');
+            
+            gmDropdown.innerHTML = '<option value="">-- Select GM --</option>';
+            gmValues.forEach(gm => {
+                const option = document.createElement('option');
+                option.value = gm;
+                option.text = gm;
+                gmDropdown.appendChild(option);
+            });
+        }
+
+        function populateCountryCheckboxes() {
+            const countryLists = originalData.map(row => row.top_country_list.split(','));
+            const uniqueCountries = [...new Set(countryLists.flat())].sort();
+            const countryCheckboxes = document.getElementById('countryCheckboxes');
+            
+            countryCheckboxes.innerHTML = '';
+            uniqueCountries.forEach(country => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'country';
+                checkbox.value = country;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(` ${country}`));
+                countryCheckboxes.appendChild(label);
+            });
+        }
+
+        document.getElementById('gmDropdown').addEventListener('change', function() {
+            applySegmentation();
+            updateCharts();
         });
 
         function applySegmentation() {
+            const selectedGM = document.getElementById('gmDropdown').value;
             const selectedCountries = Array.from(document.querySelectorAll('input[name="country"]:checked')).map(el => el.value);
             const selectedViews = Array.from(document.querySelectorAll('input[name="views"]:checked')).map(el => parseInt(el.value));
             const selectedContentVolume = Array.from(document.querySelectorAll('input[name="content_volume"]:checked')).map(el => el.value);
@@ -281,6 +312,7 @@
             const selectedEngagement = Array.from(document.querySelectorAll('input[name="engagement"]:checked')).map(el => el.value);
 
             data = originalData.filter(row => {
+                const gmMatch = !selectedGM || row.FINAL_SEG === selectedGM;
                 const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
                 const viewsMatch = selectedViews.length === 0 || selectedViews.some(viewThreshold => {
                     const views = parseInt(row.views);
@@ -296,7 +328,7 @@
                 const lifecycleMatch = selectedLifecycle.length === 0 || selectedLifecycle.includes(getHashtagLifecycle(row));
                 const engagementMatch = selectedEngagement.length === 0 || selectedEngagement.includes(getEngagementLevel(row));
 
-                return countryMatch && viewsMatch && contentVolumeMatch && lifecycleMatch && engagementMatch;
+                return gmMatch && countryMatch && viewsMatch && contentVolumeMatch && lifecycleMatch && engagementMatch;
             });
 
             if (data.length === 0) {
@@ -327,6 +359,7 @@
             updateTopCountries();
             updateTrendsOverTime();
             updateTopHashtagsOverTime();
+            
             updateViewsPerPost();
             updateViewsByCategory();
             updateSideBySideComparison();
