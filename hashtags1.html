@@ -58,11 +58,19 @@
         #fileInput, #loadButton {
             margin-bottom: 20px;
         }
+        .segmentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
         .segmentation-box {
             background-color: #2a2a2a;
             border-radius: 5px;
             padding: 10px;
-            margin-bottom: 10px;
+            flex: 1;
+            min-width: calc(33.33% - 10px);
+            max-width: calc(33.33% - 10px);
         }
         .segmentation-box summary {
             cursor: pointer;
@@ -71,6 +79,7 @@
         .segmentation-box label {
             display: block;
             margin: 5px 0;
+            font-size: 0.9em;
         }
         .date-picker {
             margin-bottom: 20px;
@@ -110,7 +119,7 @@
 
         <div class="segmentation-box">
             <details>
-                <summary>Hashtag Group Segmentation</summary>
+                <summary>FINAL_SEG</summary>
                 <label for="gmDropdown">Select GM:</label>
                 <select id="gmDropdown" name="gmDropdown">
                     <option value="">-- Select GM --</option>
