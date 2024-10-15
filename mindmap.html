@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" sizes="192x192" href="https://static.wixstatic.com/media/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png/v1/fill/w_192%2Ch_192%2Clg_1%2Cusm_0.66_1.00_0.01/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png" type="image/png"/>
+    <link rel="shortcut icon" href="https://static.wixstatic.com/media/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png/v1/fill/w_32%2Ch_32%2Clg_1%2Cusm_0.66_1.00_0.01/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png" type="image/png"/>
+    <link rel="apple-touch-icon" href="https://static.wixstatic.com/media/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png/v1/fill/w_180%2Ch_180%2Clg_1%2Cusm_0.66_1.00_0.01/58ce2e_6e1f76cddca24e2fa602b6dcca770ea5%7Emv2.png" type="image/png"/>
+        
+    <title>TikTok Hashtag Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        .logo {
+            width: 78px;
+            height: 76px;
+        }
+        nav ul {
+            display: flex;
+            list-style-type: none;
+        }
+        nav ul li {
+            margin-left: 20px;
+        }
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+        }
+        #fileInput, #loadButton {
+            margin-bottom: 20px;
+        }
+        .segmentation-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .segmentation-box {
+            background-color: #2a2a2a;
+            border-radius: 5px;
+            padding: 10px;
+            flex: 1;
+            min-width: calc(33.33% - 10px);
+            max-width: calc(33.33% - 10px);
+        }
+        .segmentation-box summary {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .segmentation-box label {
+            display: block;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .date-picker {
+            margin-bottom: 20px;
+        }
+        .date-picker label {
+            margin-right: 10px;
+        }
+        #mindMap {
+            width: 100%;
+            height: 600px;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .node circle {
+            fill: #ff5722;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        .node text {
+            font: 12px sans-serif;
+            fill: #fff;
+        }
+        .link {
+            fill: none;
+            stroke: #555;
+            stroke-opacity: 0.4;
+            stroke-width: 1.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://static.wixstatic.com/media/9ad982_c5c91a4c5188461cbe35b863d663c4b9~mv2.png/v1/fill/w_78,h_76,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/New%20Logo.png" alt="Logo" class="logo">
+            <nav>
+                <ul>
+                    <li><a href="#" onclick="showPage('dashboard')">Dashboard</a></li>
+                    <li><a href="#" onclick="showPage('insights')">Insights</a></li>
+                    <li><a href="#" onclick="showPage('settings')">Settings</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <input type="file" id="fileInput" accept=".csv">
+        <button id="loadButton">Load Visualizations</button>
+
+        <div class="segmentation-container">
+            <div class="segmentation-box">
+                <details>
+                    <summary>FINAL_SEG</summary>
+                    <label for="gmDropdown">Select GM:</label>
+                    <select id="gmDropdown" name="gmDropdown">
+                        <option value="">-- Select GM --</option>
+                    </select>
+                </details>
+            </div>
+            <div class="segmentation-box">
+                <details>
+                    <summary>Top Country List</summary>
+                    <div id="countryCheckboxes"></div>
+                </details>
+            </div>
+            <div class="segmentation-box">
+                <details>
+                    <summary>Views</summary>
+                    <label><input type="checkbox" name="views" value="5000000000"> More than 5 billion</label>
+                    <label><input type="checkbox" name="views" value="3000000000"> More than 3 billion</label>
+                    <label><input type="checkbox" name="views" value="1000000000"> More than 1 billion</label>
+                    <label><input type="checkbox" name="views" value="999999999"> Less than 1 billion</label>
+                </details>
+            </div>
+            <div class="segmentation-box">
+                <details>
+                    <summary>Content Volume</summary>
+                    <label><input type="checkbox" name="content_volume" value="high"> High-volume (>500,000 posts)</label>
+                    <label><input type="checkbox" name="content_volume" value="medium"> Medium-volume (100,000-500,000 posts)</label>
+                    <label><input type="checkbox" name="content_volume" value="low"> Low-volume (<100,000 posts)</label>
+                </details>
+            </div>
+            <div class="segmentation-box">
+                <details>
+                    <summary>Hashtag Lifecycle</summary>
+                    <label><input type="checkbox" name="lifecycle" value="new"> New/Emerging</label>
+                    <label><input type="checkbox" name="lifecycle" value="mature"> Mature</label>
+                    <label><input type="checkbox" name="lifecycle" value="declining"> Declining</label>
+                </details>
+            </div>
+            <div class="segmentation-box">
+                <details>
+                    <summary>Audience Engagement</summary>
+                    <label><input type="checkbox" name="engagement" value="high"> High Engagement</label>
+                    <label><input type="checkbox" name="engagement" value="medium"> Medium Engagement</label>
+                    <label><input type="checkbox" name="engagement" value="low"> Low Engagement</label>
+                </details>
+            </div>
+        </div>
+
+        <div class="date-picker">
+            <label for="startDate">Start Date:</label>
+            <input type="date" id="startDate" name="startDate">
+            <label for="endDate">End Date:</label>
+            <input type="date" id="endDate" name="endDate">
+        </div>
+
+        <div id="mindMap"></div>
+    </div>
+
+    <script>
+        let data = [];
+        let originalData = [];
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    originalData = results.data;
+                    data = [...originalData];
+                    populateGMDropdown();
+                    populateCountryCheckboxes();
+                    updateMindMap();
+                }
+            });
+        });
+
+        document.getElementById('loadButton').addEventListener('click', function() {
+            applySegmentation();
+            updateMindMap();
+        });
+
+        function populateGMDropdown() {
+            const gmValues = [...new Set(originalData.map(row => row.FINAL_SEG))].sort((a, b) => a.localeCompare(b));
+            const gmDropdown = document.getElementById('gmDropdown');
+            
+            gmDropdown.innerHTML = '<option value="">-- Select GM --</option>';
+            gmValues.forEach(gm => {
+                const option = document.createElement('option');
+                option.value = gm;
+                option.text = gm;
+                gmDropdown.appendChild(option);
+            });
+        }
+
+        function populateCountryCheckboxes() {
+            const countryLists = originalData.map(row => row.top_country_list.split(','));
+            const uniqueCountries = [...new Set(countryLists.flat())].sort();
+            const countryCheckboxes = document.getElementById('countryCheckboxes');
+            
+            countryCheckboxes.innerHTML = '';
+            uniqueCountries.forEach(country => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'country';
+                checkbox.value = country;
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(` ${country}`));
+                countryCheckboxes.appendChild(label);
+            });
+        }
+
+        function applySegmentation() {
+            const selectedGM = document.getElementById('gmDropdown').value;
+            const selectedCountries = Array.from(document.querySelectorAll('input[name="country"]:checked')).map(el => el.value);
+            const selectedViews = Array.from(document.querySelectorAll('input[name="views"]:checked')).map(el => parseInt(el.value));
+            const selectedContentVolume = Array.from(document.querySelectorAll('input[name="content_volume"]:checked')).map(el => el.value);
+            const selectedLifecycle = Array.from(document.querySelectorAll('input[name="lifecycle"]:checked')).map(el => el.value);
+            const selectedEngagement = Array.from(document.querySelectorAll('input[name="engagement"]:checked')).map(el => el.value);
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            data = originalData.filter(row => {
+                const gmMatch = !selectedGM || row.FINAL_SEG === selectedGM;
+                const countryMatch = selectedCountries.length === 0 || selectedCountries.some(country => row.top_country_list.includes(country));
+                const viewsMatch = selectedViews.length === 0 || selectedViews.some(viewThreshold => {
+                    const views = parseInt(row.views);
+                    return viewThreshold === 999999999 ? views < 1000000000 : views >= viewThreshold;
+                });
+                const contentVolumeMatch = selectedContentVolume.length === 0 || selectedContentVolume.some(volume => {
+                    const posts = parseInt(row.posts);
+                    if (volume === 'high') return posts > 500000;
+                    if (volume === 'medium') return posts >= 100000 && posts <= 500000;
+                    if (volume === 'low') return posts < 100000;
+                    return true;
+                });
+                const lifecycleMatch = selectedLifecycle.length === 0 || selectedLifecycle.includes(getHashtagLifecycle(row));
+                const engagementMatch = selectedEngagement.length === 0 || selectedEngagement.includes(getEngagementLevel(row));
+                const dateMatch = (!startDate || !endDate) || (new Date(row.date_range.split('-')[0]) >= new Date(startDate) && new Date(row.date_range.split('-')[0]) <= new Date(endDate));
+
+                return gmMatch && countryMatch && viewsMatch && contentVolumeMatch && lifecycleMatch && engagementMatch && dateMatch;
+            });
+
+            if (data.length === 0) {
+                data = [...originalData];
+                alert('No data matches the selected filters. Showing all data.');
+            }
+        }
+
+        function getHashtagLifecycle(row) {
+            const rankChange = parseInt(row.rank_change);
+            if (rankChange > 10) return 'new';
+            if (rankChange < -10) return 'declining';
+            return 'mature';
+        }
+
+        function getEngagementLevel(row) {
+            const viewsPerPost = parseInt(row.views) / parseInt(row.posts);
+            if (viewsPerPost > 10000) return 'high';
+            if (viewsPerPost > 1000) return 'medium';
+            return 'low';
+        }
+
+        function updateMindMap() {
+            const width = 900;
+            const height = 600;
+            const radius = Math.min(width, height) / 2 - 90;
+
+            d3.select("#mindMap").selectAll("*").remove();
+
+            const svg =   d3.select("#mindMap")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width / 2},${height / 2})`);
+
+            const tree = d3.tree()
+                .size([2 * Math.PI, radius])
+                .separation((a, b) => (a.parent == b.parent ? 1 : 2) / a.depth);
+
+            const groupedData = data.reduce((acc, row) => {
+                if (!acc[row.FINAL_SEG]) {
+                    acc[row.FINAL_SEG] = [];
+                }
+                acc[row.FINAL_SEG].push(row.hashtag_name);
+                return acc;
+            }, {});
+
+            const root = d3.hierarchy({name: "TikTok Hashtags", children: Object.entries(groupedData).map(([key, value]) => ({name: key, children: value.map(v => ({name: v}))}))});
+            
+            tree(root);
+
+            svg.selectAll(".link")
+                .data(root.links())
+                .join("path")
+                .attr("class", "link")
+                .attr("d", d3.linkRadial()
+                    .angle(d => d.x)
+                    .radius(d => d.y));
+
+            const node = svg.selectAll(".node")
+                .data(root.descendants())
+                .join("g")
+                .attr("class", "node")
+                .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`);
+
+            node.append("circle")
+                .attr("r", 4)
+                .attr("fill", d => d.children ? "#ff5722" : "#4CAF50");
+
+            node.append("text")
+                .attr("dy", "0.31em")
+                .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
+                .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
+                .attr("transform", d => d.x >= Math.PI ? "rotate(180)" : null)
+                .text(d => d.data.name)
+                .clone(true).lower()
+                .attr("stroke", "white");
+
+            node.on("click", function(event, d) {
+                if (!d.children && !d.data.children) {
+                    window.open(`https://www.tiktok.com/search?q=%23${encodeURIComponent(d.data.name)}`, '_blank');
+                }
+            });
+        }
+
+        // Add event listeners for segmentation inputs
+        document.querySelectorAll('input[type="checkbox"], #gmDropdown, #startDate, #endDate').forEach(input => {
+            input.addEventListener('change', () => {
+                if (originalData.length > 0) {
+                    applySegmentation();
+                    updateMindMap();
+                }
+            });
+        });
+
+        function showPage(pageId) {
+            // This function can be implemented to show different pages/sections of your application
+            console.log(`Showing page: ${pageId}`);
+        }
+    </script>
+</body>
+</html>
