@@ -3,151 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Finder</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 70%;
-            max-width: 800px;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .logo {
-            width: 4rem;
-            height: 4rem;
-            margin-right: 1rem;
-        }
-        h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            margin: 0;
-        }
-        .input-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 0.75rem 1rem;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 4px;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #results {
-            margin-top: 1.5rem;
-        }
-        .result-item {
-            margin-bottom: 0.5rem;
-        }
-    </style>
+    <title>Market Mix Modeling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="https://static.wixstatic.com/media/9ad982_c5c91a4c5188461cbe35b863d663c4b9~mv2.png/v1/fill/w_78,h_76,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/New%20Logo.png" alt="Logo" class="logo">
-            <h1>Email Finder</h1>
+<body class="bg-gray-100">
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-auto" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSN4h4JiKo5-FOMfY0FLPi2kB0sR6Ti_3wLYg&s" alt="Logo">
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Docs</a>
+                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Components</a>
+                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Blog</a>
+                    <a href="#" class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Showcase</a>
+                </div>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="platform">Platform</label>
-            <select id="platform">
-                <option value="instagram.com">Instagram</option>
-                <option value="linkedin.com">LinkedIn</option>
-            </select>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4">
+                Rapidly build market models <span class="text-indigo-600">without ever leaving your data.</span>
+            </h1>
+            <p class="text-xl text-gray-600">
+                This is a <span class="text-blue-500">market mix modeling</span> and <span class="text-blue-500">visualisation application</span>. Select a .csv file that includes data for up to 24 months (rows) and up to 10 channels (columns). Then, click "Generate Charts" to create your visualizations.
+            </p>
         </div>
-        <div class="input-group">
-            <label for="occupation">Occupation</label>
-            <input type="text" id="occupation" placeholder="Enter occupation">
+
+        <div class="flex justify-center space-x-4 mb-12">
+            <input type="file" id="csvFile" accept=".csv" class="hidden">
+            <label for="csvFile" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
+                Upload CSV File
+            </label>
+            <button id="generateCharts" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Generate Charts
+            </button>
         </div>
-        <div class="input-group">
-            <label for="city">City</label>
-            <input type="text" id="city" placeholder="Enter city">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Channel Contribution to Sales</h2>
+                <canvas id="contributionChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Sales Over Time</h2>
+                <canvas id="salesChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Channel Efficiency</h2>
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Budget Allocation</h2>
+                <canvas id="budgetChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Regression Analysis</h2>
+                <canvas id="regressionChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Predictive Checks</h2>
+                <canvas id="predictiveChecksChart"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Correlation Heatmap</h2>
+                <div id="correlationHeatmapChart"></div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Channel Performance Scatter Plot</h2>
+                <div id="scatterPlotChart"></div>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="emailProvider">Email Provider</label>
-            <select id="emailProvider">
-                <option value="gmail.com">Gmail</option>
-                <option value="outlook.com">Outlook</option>
-                <option value="yahoo.com">Yahoo</option>
-                <option value="icloud.com">iCloud</option>
-            </select>
-        </div>
-        <button onclick="findEmails()">Find Emails</button>
-        <div id="results"></div>
-    </div>
+    </main>
 
     <script>
-        async function findEmails() {
-            const platform = document.getElementById('platform').value;
-            const occupation = document.getElementById('occupation').value;
-            const city = document.getElementById('city').value;
-            const emailProvider = document.getElementById('emailProvider').value;
-
-            const searchUrl = `https://www.google.com/search?q=site%3Awww.${platform}+%22${occupation}%22+%22${city}%22+%22${emailProvider}%22`;
-
-            try {
-                const response = await fetch(searchUrl);
-                const html = await response.text();
-                const emails = extractEmails(html, emailProvider);
-                displayResults(emails, searchUrl);
-            } catch (error) {
-                console.error('Error fetching search results:', error);
-                document.getElementById('results').innerHTML = '<p>Error fetching results. Please try again.</p>';
-            }
-        }
-
-        function extractEmails(html, emailProvider) {
-            const regex = new RegExp(`[a-zA-Z0-9._%+-]+@${emailProvider.replace('.', '\\.')}`, 'g');
-            return [...new Set(html.match(regex) || [])];
-        }
-
-        function displayResults(emails, searchUrl) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<h2>Results</h2>';
-
-            if (emails.length === 0) {
-                resultsDiv.innerHTML += '<p>No emails found.</p>';
+        document.getElementById('generateCharts').addEventListener('click', function() {
+            const file = document.getElementById('csvFile').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csvData = e.target.result;
+                    const parsedData = parseCSV(csvData);
+                    generateCharts(parsedData);
+                };
+                reader.readAsText(file);
             } else {
-                emails.forEach(email => {
-                    resultsDiv.innerHTML += `
-                        <div class="result-item">
-                            <span>${email}</span>
-                            <a href="${searchUrl}" target="_blank">URL</a>
-                        </div>
-                    `;
-                });
+                alert('Please upload a CSV file first.');
             }
+        });
+
+        function parseCSV(csvData) {
+            const rows = csvData.split('\n');
+            const headers = rows[0].split(',');
+            const data = {
+                labels: [],
+                datasets: headers.slice(1).map((channel, index) => ({
+                    label: channel,
+                    data: [],
+                    backgroundColor: `hsl(${index * 30}, 70%, 50%)`,
+                })),
+            };
+
+            for (let i = 1; i < rows.length; i++) {
+                const values = rows[i].split(',');
+                if (values.length === headers.length) {
+                    data.labels.push(values[0]);
+                    for (let j = 1; j < values.length; j++) {
+                        data.datasets[j-1].data.push(parseFloat(values[j]));
+                    }
+                }
+            }
+
+            return data;
+        }
+
+        function generateCharts(data) {
+            createContributionChart(data);
+            createSalesChart(data);
+            createEfficiencyChart(data);
+            createBudgetChart(data);
+            createRegressionChart(data);
+            createPredictiveChecksChart(data);
+            createCorrelationHeatmapChart(data);
+            createScatterPlotChart(data);
+        }
+
+        function createContributionChart(data) {
+            new Chart(document.getElementById('contributionChart').getContext('2d'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Channel Contribution to Sales'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createSalesChart(data) {
+            new Chart(document.getElementById('salesChart').getContext('2d'), {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sales Over Time'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createEfficiencyChart(data) {
+            new Chart(document.getElementById('efficiencyChart').getContext('2d'), {
+                type: 'radar',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Channel Efficiency'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createBudgetChart(data) {
+            new Chart(document.getElementById('budgetChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: data.datasets.map(ds => ds.label),
+                    datasets: [{
+                        data: data.datasets.map(ds => ds.data.reduce((a, b) => a + b, 0)),
+                        backgroundColor: data.datasets.map(ds => ds.backgroundColor),
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Budget Allocation'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createRegressionChart(data) {
+            new Chart(document.getElementById('regressionChart').getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: data.datasets.map(ds => ({
+                        label: ds.label,
+                        data: ds.data.map((y, x) => ({x, y})),
+                        backgroundColor: ds.backgroundColor,
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Regression Analysis'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createPredictiveChecksChart(data) {
+            new Chart(document.getElementById('predictiveChecksChart').getContext('2d'), {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Predictive Checks'
+                        },
+                    },
+                }
+            });
+        }
+
+        function createCorrelationHeatmapChart(data) {
+            const labels = data.datasets.map(ds => ds.label);
+            const correlationData = calculateCorrelationMatrix(data.datasets);
+
+            const plotData = [{
+                z: correlationData,
+                x: labels,
+                y: labels,
+                type: 'heatmap',
+                colorscale: 'Viridis'
+            }];
+
+            const layout = {
+                title: 'Correlation Heatmap',
+                height: 400,
+                width: 400
+            };
+
+            Plotly.newPlot('correlationHeatmapChart', plotData, layout);
+        }
+
+        function createScatterPlotChart(data) {
+            const plotData = data.datasets.map(ds => ({
+                x: data.labels,
+                y: ds.data,
+                mode: 'markers',
+                type: 'scatter',
+                name: ds.label,
+                marker: {
+                    size: 10,
+                    color: ds.backgroundColor
+                }
+            }));
+
+            const layout = {
+                title: 'Channel Performance Scatter Plot',
+                xaxis: { title: 'Time' },
+                yaxis: { title: 'Value' },
+                height: 400,
+                width: 400
+            };
+
+            Plotly.newPlot('scatterPlotChart', plotData, layout);
+        }
+
+        function calculateCorrelationMatrix(datasets) {
+            const matrix = [];
+            for (let i = 0; i < datasets.length; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < datasets.length; j++) {
+                    matrix[i][j] = calculateCorrelation(datasets[i].data, datasets[j].data);
+                }
+            }
+            return matrix;
+        }
+
+        function calculateCorrelation(x, y) {
+            const n = x.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumX2 += x[i] * x[i];
+                sumY2 += y[i] * y[i];
+            }
+            const numerator = n * sumXY - sumX * sumY;
+            const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+            return numerator / denominator;
         }
     </script>
 </body>
