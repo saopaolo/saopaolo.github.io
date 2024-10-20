@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 70%;
+            max-width: 800px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .logo {
+            width: 4rem;
+            height: 4rem;
+            margin-right: 1rem;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #results {
+            margin-top: 1.5rem;
+        }
+        .result-item {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://static.wixstatic.com/media/9ad982_c5c91a4c5188461cbe35b863d663c4b9~mv2.png/v1/fill/w_78,h_76,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/New%20Logo.png" alt="Logo" class="logo">
+            <h1>Email Finder</h1>
+        </div>
+        <div class="input-group">
+            <label for="platform">Platform</label>
+            <select id="platform">
+                <option value="instagram.com">Instagram</option>
+                <option value="linkedin.com">LinkedIn</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="occupation">Occupation</label>
+            <input type="text" id="occupation" placeholder="Enter occupation">
+        </div>
+        <div class="input-group">
+            <label for="city">City</label>
+            <input type="text" id="city" placeholder="Enter city">
+        </div>
+        <div class="input-group">
+            <label for="emailProvider">Email Provider</label>
+            <select id="emailProvider">
+                <option value="gmail.com">Gmail</option>
+                <option value="outlook.com">Outlook</option>
+                <option value="yahoo.com">Yahoo</option>
+                <option value="icloud.com">iCloud</option>
+            </select>
+        </div>
+        <button onclick="findEmails()">Find Emails</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function findEmails() {
+            const platform = document.getElementById('platform').value;
+            const occupation = document.getElementById('occupation').value;
+            const city = document.getElementById('city').value;
+            const emailProvider = document.getElementById('emailProvider').value;
+
+            const searchUrl = `https://www.google.com/search?q=site%3Awww.${platform}+%22${occupation}%22+%22${city}%22+%22${emailProvider}%22`;
+
+            try {
+                const response = await fetch(searchUrl);
+                const html = await response.text();
+                const emails = extractEmails(html, emailProvider);
+                displayResults(emails, searchUrl);
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+                document.getElementById('results').innerHTML = '<p>Error fetching results. Please try again.</p>';
+            }
+        }
+
+        function extractEmails(html, emailProvider) {
+            const regex = new RegExp(`[a-zA-Z0-9._%+-]+@${emailProvider.replace('.', '\\.')}`, 'g');
+            return [...new Set(html.match(regex) || [])];
+        }
+
+        function displayResults(emails, searchUrl) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>Results</h2>';
+
+            if (emails.length === 0) {
+                resultsDiv.innerHTML += '<p>No emails found.</p>';
+            } else {
+                emails.forEach(email => {
+                    resultsDiv.innerHTML += `
+                        <div class="result-item">
+                            <span>${email}</span>
+                            <a href="${searchUrl}" target="_blank">URL</a>
+                        </div>
+                    `;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
