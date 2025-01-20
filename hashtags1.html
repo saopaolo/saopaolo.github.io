@@ -126,15 +126,19 @@
             gap: 10px;
         }
         .mind-map-hashtag {
-            background-color: #2a2a2a;
-            border-radius: 5px;
-            padding: 5px 10px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: background-color 0.3s;
+			color: #ffffff; /* Make text white */
+			text-decoration: none; /* Remove default underline from links */
+			background-color: #2a2a2a;
+			border-radius: 5px;
+			padding: 8px 12px; /* Slightly increased padding for better clickability */
+			font-size: 0.9em;
+			cursor: pointer;
+			transition: all 0.3s ease; /* Smooth transition for hover effects */
         }
         .mind-map-hashtag:hover {
             background-color: #3a3a3a;
+			color: #00ff00; /* Change color on hover for better interaction feedback */
+			transform: translateY(-2px); /* Slight lift effect on hover */
         }
     </style>
 </head>
